@@ -14,6 +14,7 @@ struct ContentView: View {
     @State private var stepsToAdd: String = ""
     @State private var startDate: Date = Date()
     @State private var alertPresented = false
+    @State private var addedSuccessfully = true
     
     init() {
         healthStore = HealthStore()
@@ -26,7 +27,9 @@ struct ContentView: View {
         NavigationView {
             Form {
                 Section {
-                    DatePicker("Start Time", selection: $startDate)
+                    DatePicker("Start Time", 
+                               selection: $startDate,
+                               in: ...Date().addingTimeInterval(-3600))
                         .datePickerStyle(.compact)
                     TextField("Amount of steps", text: $stepsToAdd)
                         .keyboardType(.decimalPad)
@@ -43,9 +46,12 @@ struct ContentView: View {
                         if let healthStore = healthStore {
                             healthStore.requestAuthorization { success in
                                 if success {
+                                    addedSuccessfully = true
                                     healthStore.writeSteps(startDate: startDate, stepsToAdd: convertedSteps)
                                     self.alertPresented.toggle()
                                     self.stepsToAdd = ""
+                                } else {
+                                    addedSuccessfully = false
                                 }
                             }
                             
@@ -55,7 +61,7 @@ struct ContentView: View {
                     .foregroundColor(.blue)
                     .disabled(isDisabled)
                     .alert(isPresented: $alertPresented, content: {
-                        Alert(title: Text("Success"), message: Text("Successfully added \(stepsToAdd) steps to Health data"), dismissButton: .default(Text("Dismiss")))
+                        Alert(title: Text(addedSuccessfully ? "Success" : "Failure"), message: Text(addedSuccessfully ? "Successfully added \(stepsToAdd) steps to Health data" : "No cheating today"), dismissButton: .default(Text("Dismiss")))
                     })
                 }
                 .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .center)
